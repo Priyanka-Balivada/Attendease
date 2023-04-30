@@ -36,11 +36,11 @@ void loop() {
   
   if(objecttemp>100.4)
   {
-    tone(buzzer, 1046) ; 
+    digitalWrite(buzzer,HIGH) ; 
   }
   else
   {
-    noTone(buzzer) ; 
+    digitalWrite(buzzer,LOW) ; 
   }
   
 //  Serial.print("Ambient temperature = ");

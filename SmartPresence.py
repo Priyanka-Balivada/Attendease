@@ -12,17 +12,14 @@ import json
 import time
 import datetime;
 
-# Initialize connection.
-# Uses st.cache_resource to only run once.
 
+count=0;
 @st.cache_resource
 def init_connection():
     return mysql.connector.connect(**st.secrets["mysql"])
 
 conn = init_connection()
 
-# Perform query.
-# Uses st.cache_data to only rerun when the query changes or after 10 min.
 @st.cache_data(ttl=600)
 def run_query(query):
     with conn.cursor() as cur:
@@ -30,15 +27,12 @@ def run_query(query):
         return cur.fetchall()
 
 def decode(im):
-    # Decode QR code and barcode from the image using PyZBar library
     decoded_objs = pyzbar.decode(im, symbols=[ZBarSymbol.QRCODE, ZBarSymbol.CODE128])
 
-    # Loop through all decoded objects and return the data
     for obj in decoded_objs:
         return obj.data.decode('utf-8')
 
 def scan():
-    # Open the default camera using OpenCV
     cap = cv2.VideoCapture(0)
 
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -47,13 +41,11 @@ def scan():
     prev_data = None 
     with placeholder.container():
         st.title("SmartPresence")
-        st.subheader("Scan the QR CODE")
+        st.subheader("Scan the Temperature and QR Code")
 
-        st.sidebar.text("Select Events")
-        st.sidebar.checkbox("Roborace");
-        st.sidebar.checkbox("Armour Wars");
-
-        col1, col2, col3, col4 , col5 = st.columns(5)
+        col1, col2, col3, col4, col5 = st.columns([5,10,5,5,5])
+       
+    
         with col1:
             st.header("PRN")
         with col2:
@@ -65,21 +57,34 @@ def scan():
         with col5:
             st.header("Time")
 
+            rows = run_query("SELECT * FROM roboracing;")
+            for row in rows:
+                        with col1:
+                            st.write(f"{row[0]}")
+                        with col2:
+                            st.write(f"{row[1]}")
+                        with col3:
+                            st.write(f"{row[2]}")
+                        with col4:
+                            st.write(f"{row[3]}")
+                        with col5:
+                            st.write(row[4].strftime("%H:%M:%S"))
+
         while True:
             TS = request.urlopen("http://api.thingspeak.com/channels/2108652/feeds/last.json?api_key="+st.secrets["api_key"]);
             response = TS.read()
             datawebsite=json.loads(response)
 
             object = float(datawebsite['field2']) 
+
             ret, frame = cap.read()
+
             data = decode(frame)
 
             if data is not None and data != prev_data:
                 prev_data = data
-            
-                if((object<=100.4)):
-                    rows = run_query("SELECT student.PRN, student.name, student.division FROM student where PRN="+data+";")
-                    for row in rows:
+                rows = run_query("SELECT student.PRN, student.name, student.division FROM student where PRN="+data+";")
+                for row in rows:
                         timevar = datetime.datetime.now()
                         with col1:
                             st.write(f"{row[0]}")
@@ -97,38 +102,21 @@ def scan():
                         cursor=conn.cursor()
                         cursor.execute(query, val);
                         conn.commit();
-                else:
-                    for row in rows:
-                        with col1:
-                            st.write(f"{row[0]}")
-                        with col2:
-                            st.write(f"{row[1]}")
-                        with col3:
-                            st.write(f"{row[2]}")
-                        with col4:
-                            st.write("Danger")
-                        with col5:
-                            st.write(timevar.strftime("%H:%M:%S"))
 
-                        query="INSERT INTO roboracing values(%s,%s,%s,%s,%s)";
-                        val = (str(row[0]), str(row[1]), str(row[2]),"Danger",str(timevar));
-                        cursor=conn.cursor()
-                        cursor.execute(query, val);
-                        conn.commit();
-            
-                cv2.imshow('QRCode Scanner', frame)
+            cv2.imshow('QRCode Scanner', frame)
 
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
     cap.release()
     cv2.destroyAllWindows()
 
 placeholder = st.empty()
+
 if __name__ == '__main__':
-    with placeholder.container():
-        user=st.text_input("Username")
-        passwd=st.text_input("Password")
-        if st.button("Login"):
-            if((user=="Admin" ) and (passwd=="123")):
-                scan()
+        with placeholder.container():
+            user=st.text_input("Username")
+            passwd=st.text_input("Password")
+            if st.button("Login"):
+                if((user=="Admin" ) and (passwd=="123")):
+                    scan()
