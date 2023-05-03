@@ -10,11 +10,11 @@ from bs4 import BeautifulSoup as bs
 from pymysql import *
 import pandas.io.sql as sql
 import pandas as pd
-import re
-import json
-import time
+from plyer import notification
 import datetime;
+import os;
 
+icon_path = os.path.abspath('Logo.ico')
 
 count=0;
 @st.cache_resource
@@ -43,14 +43,18 @@ def scan():
 
     prev_data = None 
     with placeholder.container():
-        st.title("Attendease")
-        st.subheader("Scan the QR CODE")
+        st.title("AttendEase")
 
         st.sidebar.text("Select Events")
-        event1=st.sidebar.checkbox("Roborace");
+        event1=st.sidebar.checkbox("Roborace",value = True);
         event2=st.sidebar.checkbox("Armour Wars");
         event3=st.sidebar.checkbox("Project Competition");
         download=st.sidebar.button("Download Excel workbook");
+
+        if (event1 or event2 or event3):
+            st.subheader("Scan the QR CODE")
+        else:
+            st.subheader("Select Event Name from Side Panel")
 
         col1, col2, col3, col4, col5 = st.columns([5,8,5,5,5])
        
@@ -60,7 +64,7 @@ def scan():
             with col2:
                 st.header("Name")
             with col3:
-                st.header("Division")
+                st.header("Div")
             with col4:
                 st.header("Roll No")
             with col5:
@@ -101,7 +105,7 @@ def scan():
             with col2:
                 st.header("Name")
             with col3:
-                st.header("Division")
+                st.header("Div")
             with col4:
                 st.header("Roll No")
             with col5:
@@ -109,6 +113,7 @@ def scan():
             
 
             rows = run_query("SELECT * FROM armour_wars;")
+
             for row in rows:
                         with col1:
                             st.write(f"{row[0]}")
@@ -144,7 +149,7 @@ def scan():
             with col2:
                 st.header("Name")
             with col3:
-                st.header("Division")
+                st.header("Div")
             with col4:
                 st.header("Roll No")
             with col5:
@@ -187,7 +192,14 @@ def scan():
             if event1 and data is not None and data != prev_data:
                 prev_data = data
                 rows = run_query("SELECT student.PRN, student.name, student.division, student.roll_no FROM student where PRN="+data+";")
+                    
                 for row in rows:
+                        notification.notify(
+                            title = 'AttendEase',
+                            message = data+' is registered',
+                            app_icon=icon_path,
+                            timeout = 3,
+                        )
                         timevar = datetime.datetime.now()
                         with col1:
                             st.write(f"{row[0]}")
@@ -205,11 +217,25 @@ def scan():
                         cursor=conn.cursor()
                         cursor.execute(query, val);
                         conn.commit();
+                        break;
+                else:
+                     notification.notify(
+                        title = 'AttendEase',
+                        message = data+' is not registered',
+                        app_icon=icon_path,
+                        timeout = 3,
+                        )
             
             if event2 and data is not None and data != prev_data:
                 prev_data = data
                 rows = run_query("SELECT student.PRN, student.name, student.division, student.roll_no FROM student where PRN="+data+";")
                 for row in rows:
+                        notification.notify(
+                            title = 'AttendEase',
+                            message = data+' is registered',
+                            app_icon=icon_path,
+                            timeout = 3,
+                        )
                         timevar = datetime.datetime.now()
                         with col1:
                             st.write(f"{row[0]}")
@@ -227,11 +253,25 @@ def scan():
                         cursor=conn.cursor()
                         cursor.execute(query, val);
                         conn.commit();
+                        break;
+                else:
+                     notification.notify(
+                        title = 'AttendEase',
+                        message = data+' is not registered',
+                        app_icon=icon_path,
+                        timeout = 3,
+                        )
             
             if event3 and data is not None and data != prev_data:
                 prev_data = data
                 rows = run_query("SELECT student.PRN, student.name, student.division, student.roll_no FROM student where PRN="+data+";")
                 for row in rows:
+                        notification.notify(
+                            title = 'AttendEase',
+                            message = data+' is registered',
+                            app_icon=icon_path,
+                            timeout = 3,
+                        )
                         timevar = datetime.datetime.now()
                         with col1:
                             st.write(f"{row[0]}")
@@ -249,6 +289,14 @@ def scan():
                         cursor=conn.cursor()
                         cursor.execute(query, val);
                         conn.commit();
+                        break;
+                else:
+                     notification.notify(
+                        title = 'AttendEase',
+                        message = data+' is not registered',
+                        app_icon=icon_path,
+                        timeout = 3,
+                        )
 
             cv2.imshow('QRCode Scanner', frame)
 
